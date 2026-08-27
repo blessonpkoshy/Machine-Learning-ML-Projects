@@ -1,0 +1,154 @@
+```{r}
+# Load necessary libraries
+library(tidyverse)
+library(caret)
+library(rpart)
+library(randomForest)
+library(kernlab)
+library(e1071)
+library(NeuralNetTools)
+library(neuralnet)
+library(class)
+```
+
+
+```{r}
+# Set seed for reproducibility
+set.seed(123)
+
+# Load the AIBL data
+aibl_data <- read.csv("C:/Users/bless/Desktop/Project/ML/Master.csv", header = TRUE)
+
+dim(aibl_data)
+# Data preprocessing
+# Combine MCI and AD categories into Non-HC
+aibl_data$Diagnosis <- ifelse(aibl_data$Diagnosis == 1 , "HC", "Non-HC")
+aibl_data$Diagnosis <- factor(aibl_data$Diagnosis)
+
+```
+
+
+```{r}
+# Feature Engineering
+# Binning
+
+aibl_data$MMSCORE <- ifelse(aibl_data$MMSCORE < 9, "sever", 
+          ifelse(aibl_data$MMSCORE >= 10 & aibl_data$MMSCORE < 20,"modest",
+          ifelse(aibl_data$MMSCORE >= 20 & aibl_data$MMSCORE < 24,"early", "normal")))
+
+aibl_data$MMSCORE <- as.factor(aibl_data$MMSCORE)
+aibl_data$MMSCORE <- as.numeric(aibl_data$MMSCORE)
+
+
+# table(aibl_data$MMSCORE)
+
+```
+
+```{r}
+
+# Check for missing values
+sum(is.na(aibl_data))
+sum(is.null(aibl_data))
+
+# Check for duplicate values and remove duplicates
+duplicated_rows <- aibl_data[duplicated(aibl_data), ]
+aibl_data <- unique(aibl_data)
+
+# Remove rows with missing values
+aibl_data <- na.omit(aibl_data)
+
+# Export data to a CSV file
+write.csv(aibl_data, file = "C:/Users/bless/Desktop/Project/ML/Master_my_data.csv")
+
+```
+Smote technique is applied in Weka to balance the classes.
+
+```{r}
+
+# Load the new AIBL data after SMOTE
+aibl_data <- read.csv("C:/Users/bless/Desktop/Project/ML/CW/Master_my_data.csv", header = TRUE)
+
+dim(aibl_data)
+aibl_data$Diagnosis <- factor(aibl_data$Diagnosis)
+
+```
+
+```{r}
+aibl_data <- aibl_data[,-1]
+# 
+# Reshape the data from wide to long format using gather
+aibl_data_long <- aibl_data %>% 
+  gather(key = "variable", value = "value", -Diagnosis)
+
+# Create a box plot of all variables by Diagnosis using facet_wrap
+ggplot(aibl_data_long, aes(x = Diagnosis, y = value)) +
+  geom_boxplot() +
+  facet_wrap(~ variable, scales = "free") +
+  labs(x = "Diagnosis", y = "value") +
+  ggtitle("Box Plot of AIBL Dataset by Variable")
+
+```
+
+```{r}
+
+# Remove irrelevant variables
+
+# Recursive feature selection (RFE)
+ctrl <- rfeControl(functions = rfFuncs, method = "cv", number = 5)
+rfProfile <- rfe(aibl_data[,1:(ncol(aibl_data)-1)], aibl_data$Diagnosis, sizes = c(1:(ncol(aibl_data)-1)), rfeControl = ctrl)
+print(rfProfile$optVariables)
+
+aibl_data_Re <- aibl_data[, c(rfProfile$optVariables,"Diagnosis")]
+
+# correlation
+cor_features <- findCorrelation(cor(aibl_data[, -ncol(aibl_data)]), cutoff = 0.5)
+aibl_data_fs <- aibl_data[, c(1, cor_features + 1)]
+
+
+```
+
+```{r}
+
+
+# Split data into training and testing sets
+train_index <- createDataPartition(aibl_data_Re$Diagnosis,
+                                   p = 0.7, list = FALSE)
+train_data <- aibl_data_Re[train_index, ]
+test_data <- aibl_data_Re[-train_index, ]
+
+# Feature scaling
+train_data[, -ncol(train_data)] <- scale(train_data[, -ncol(train_data)])
+test_data[, -ncol(test_data)] <- scale(test_data[, -ncol(test_data)])
+
+test_data$Diagnosis <- as.factor(test_data$Diagnosis)
+train_data$Diagnosis <- as.factor(train_data$Diagnosis)
+
+
+```
+
+
+```{r}
+# Model training and evaluation
+
+# k-Nearest Neighbors (kNN) model and create confusion matrix
+knn_model <- knn(train = train_data[, -ncol(test_data)], 
+                 test = test_data[, -ncol(test_data)], 
+                 cl = train_data$Diagnosis, k = 5)
+knn_cm <- confusionMatrix(knn_model, test_data$Diagnosis)
+print(knn_cm)
+
+# Random forest (RF) model
+rf_model <- randomForest(Diagnosis ~ ., data = train_data, ntree = 500)
+rf_predict <- predict(rf_model, test_data)
+rf_cm <- confusionMatrix(rf_predict, test_data$Diagnosis)
+print(rf_cm)
+
+# Support vector machine (SVM) model
+svm_model <- ksvm(Diagnosis ~ ., data = train_data, 
+                  type = "C-svc", kernel = "rbfdot", 
+                  kpar = list(sigma = 0.1), C = 100)
+svm_predict <- predict(svm_model, test_data)
+svm_cm <- confusionMatrix(svm_predict, test_data$Diagnosis)
+print(svm_cm)
+
+```
