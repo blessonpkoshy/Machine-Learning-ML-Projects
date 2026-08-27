@@ -1,0 +1,302 @@
+---
+title: "Data Validation and Visualisation"
+output: html_document
+---
+```{r}
+# Load necessary libraries
+library(tidyverse)
+library(caret)
+library(rpart)
+library(randomForest)
+library(kernlab)
+library(e1071)
+library(NeuralNetTools)
+library(neuralnet)
+library(class)
+```
+```{r}
+#Read the files.
+
+neurobat<-read.csv("C:/Users/bless/Desktop/Project/ML/aibl_neurobat_01-Jun-2018.csv", stringsAsFactors = FALSE)
+
+pdxconv<-read.csv("C:/Users/bless/Desktop/Project/ML/aibl_pdxconv_01-Jun-2018.csv", stringsAsFactors = FALSE)
+
+mmse<-read.csv("C:/Users/bless/Desktop/Project/ML/aibl_mmse_01-Jun-2018.csv", stringsAsFactors = FALSE)
+
+cdr<- read.csv("C:/Users/bless/Desktop/Project/ML/aibl_cdr_01-Jun-2018.csv", stringsAsFactors = FALSE)
+
+labdata<-read.csv("C:/Users/bless/Desktop/Project/ML/aibl_labdata_01-Jun-2018.csv", stringsAsFactors = FALSE)
+
+apoeres<-read.csv("C:/Users/bless/Desktop/Project/ML/aibl_apoeres_01-Jun-2018.csv", stringsAsFactors = FALSE)
+
+medhist<-read.csv("C:/Users/bless/Desktop/Project/ML/aibl_medhist_01-Jun-2018.csv", stringsAsFactors = FALSE)
+
+ptdemog<-read.csv("C:/Users/bless/Desktop/Project/ML/aibl_ptdemog_01-Jun-2018.csv", stringsAsFactors = FALSE)
+
+
+```
+
+```{r}
+
+#Bringing the files together
+
+library("dplyr")
+
+#Merge the datasets with 1688 observation.
+aibl_data<-cdr%>%
+
+  inner_join(labdata)%>%
+  inner_join(mmse)%>%
+  inner_join(neurobat)%>%
+  inner_join(pdxconv,by=c("RID"="RID","SITEID"="SITEID","VISCODE"="VISCODE"))
+
+
+#Merge the datasets with 862 observations only. These remain fixed for the all the trials  over the testing period. 
+
+#Remove SITEID and VISCODE, as these are not relevant, because these variables remain fixed for all the participants.
+medhist1<-medhist[,c(-2,-3)]
+apoeres1<-apoeres[,c(-2,-3)]
+ptdemog1<-ptdemog[,c(-2,-3)]
+
+#Merge with the key RID only.
+ aibl_data<-aibl_data%>%
+  left_join(medhist1)%>%
+  left_join(apoeres1)%>%
+  left_join(ptdemog1,by=c("RID"="RID"))
+
+head (aibl_data)
+
+arrange(aibl_data, RID)
+
+head (aibl_data)
+
+sapply(aibl_data, class) # UNDERSTAND CLASS
+dim(aibl_data) # checking the dimensions of the dataframe
+names(aibl_data) #list of variable names
+
+aibl_data <- aibl_data[aibl_data$VISCODE=='bl', ]
+# aibl_data_m18 <- aibl_data[aibl_data$VISCODE=='m18', ]
+
+
+
+```
+
+```{r}
+
+# Before Pre processing
+
+aibl_data_raw <- aibl_data
+aibl_data_raw$DXCURREN <- ifelse(aibl_data_raw$DXCURREN == 1 , "HC", "Non-HC")
+aibl_data_raw$DXCURREN <- factor(aibl_data_raw$DXCURREN)
+
+# Split the data into training and testing sets
+set.seed(12345)
+
+train_index <- createDataPartition(aibl_data_raw$DXCURREN, p = 0.7, list = FALSE)
+train_data <- aibl_data_raw[train_index, ]
+test_data <- aibl_data_raw[-train_index, ]
+
+
+# Modelling with Random forest (RF) model
+rf_model <- randomForest(DXCURREN ~ ., data = train_data, ntree = 500)
+rf_predict <- predict(rf_model, test_data)
+rf_cm <- confusionMatrix(rf_predict, test_data$DXCURREN)
+print(rf_cm)
+
+
+```
+
+```{r}
+# Pre processing
+
+aibl_data <- aibl_data[, -which(names(aibl_data) %in% c("RID","VISCODE","EXAMDATE","APTESTDT","PTDOB"))]
+
+cols_to_factor <- c("PTGENDER","MHPSYCH","MH2NEURL","MH4CARD","MH6HEPAT","MH8MUSCL","MH9ENDO","MH10GAST","MH12RENA","MH16SMOK","MH17MALI","CDGLOBAL","DXCURREN")
+
+# Factor the selected columns using mutate_at()
+aibl_data <- aibl_data %>% mutate_at(vars(all_of(cols_to_factor)), factor)
+
+unique(aibl_data$DXCURREN)
+# Missing value imputation
+
+aibl_data[aibl_data == -4] <- NA
+
+aibl_data$DXCURREN[aibl_data$DXCURREN == 7] <- NA
+
+aibl_data$DXCURREN <- ifelse(aibl_data$DXCURREN == 1 , "HC", "Non-HC")
+aibl_data$DXCURREN <- factor(aibl_data$DXCURREN)
+# Remove duplicate rows using distinct()
+aibl_data <- distinct(aibl_data)
+
+col_index <- which(names(aibl_data) == "DXCURREN")  # Get the current index of the column
+aibl_data <- aibl_data[, c(1:(col_index-1), (col_index+1):ncol(aibl_data), col_index)]
+
+write_csv(aibl_data, "C:/Users/bless/Desktop/Project/DV&V/AIBL__data-.csv")
+
+```
+```{r}
+
+aibl_data <- read.csv("C:/Users/bless/Desktop/Project/DV&V/AIBL__data-.csv")
+
+# Feature Engineering
+# Binning
+
+aibl_data$MMSCORE <- ifelse(aibl_data$MMSCORE <= 10, "sever", 
+          ifelse(aibl_data$MMSCORE <= 20 & aibl_data$MMSCORE > 10,"modest",
+          ifelse(aibl_data$MMSCORE <= 24 & aibl_data$MMSCORE > 20,"early", 
+          ifelse(aibl_data$MMSCORE <= 30 & aibl_data$MMSCORE > 24,"normal", NA))))
+# table(aibl_data$MMSCORE)
+
+cols_to_factor <- c("PTGENDER","MHPSYCH","MH2NEURL","MH4CARD","MH6HEPAT","MH8MUSCL","MH9ENDO","MH10GAST","MH12RENA","MH16SMOK","MH17MALI","CDGLOBAL","MMSCORE","DXCURREN")
+
+# Factor the selected columns using mutate_at()
+aibl_data <- aibl_data %>% mutate_at(vars(all_of(cols_to_factor)), factor)
+
+
+
+
+# Perform Data Visualization to find outliers
+aibl_data_long <- aibl_data %>% 
+  gather(key = "variable", value = "value", -DXCURREN)
+
+# Create a box plot of all variables by Diagnosis using facet_wrap
+ggplot(aibl_data_long, aes(x = DXCURREN, y = value)) +
+  geom_boxplot() +
+  facet_wrap(~ variable, scales = "free") +
+  labs(x = "Diagnosis", y = "value") +
+  ggtitle("Box Plot of AIBL Dataset by Variable")
+
+
+
+```
+```{r}
+
+# Impute NA values in aibl_data using missForest
+# install.packages("missForest")
+library("missForest")
+
+aibl_data <- missForest(aibl_data, xtrue = aibl_data, verbose = TRUE)
+
+aibl_data <-aibl_data$ximp
+
+# Perform Data Visualization
+aibl_data_long <- aibl_data %>% 
+  gather(key = "variable", value = "value", -DXCURREN)
+
+# Create a box plot of all variables by Diagnosis using facet_wrap
+ggplot(aibl_data_long, aes(x = DXCURREN, y = value)) +
+  geom_boxplot() +
+  facet_wrap(~ variable, scales = "free") +
+  labs(x = "Diagnosis", y = "value") +
+  ggtitle("Box Plot of AIBL Dataset by Variable")
+
+
+```
+
+```{r}
+
+table(aibl_data$DXCURREN)
+write_csv(aibl_data, "C:/Users/bless/Desktop/Project/DV&V/AIBL_for_Smote_data-.csv")
+
+# Data balancing with SMOTE
+
+# install.packages("vctrs")
+# install.packages("devtools")
+# devtools::install_github("dongyuanwu/RSBID")
+library("RSBID")
+AIBL_Smote_data <- SMOTE_NC(aibl_data,31)
+summary(AIBL_Smote_data)
+
+table(AIBL_Smote_data$DXCURREN)
+
+
+AIBL_Smote_data <- AIBL_Smote_data[,-1]
+
+AIBL_Smote_data$MMSCORE <- as.factor(AIBL_Smote_data$MMSCORE)
+AIBL_Smote_data$MMSCORE <- as.numeric(AIBL_Smote_data$MMSCORE)
+AIBL_Smote_data$DXCURREN <- factor(AIBL_Smote_data$DXCURREN)
+
+#Shapiro-Wilk test
+shapiro_results <- lapply(AIBL_Smote_data[,-ncol(AIBL_Smote_data)], shapiro.test)
+
+p_values <- sapply(shapiro_results, function(x) x$p.value)
+p_values
+non_normal_vars <- names(p_values[p_values < 0.05])
+non_normal_vars
+```
+
+```{r}
+# Load the required packages
+library(stats)
+
+# Standardize the data
+scaled_data <- scale(AIBL_Smote_data[,-ncol(AIBL_Smote_data)])
+
+# Perform PCA
+pca_result <- prcomp(scaled_data)
+
+# Calculate the explained variance
+explained_variance <- pca_result$sdev^2 / sum(pca_result$sdev^2)
+
+# Select the number of principal components
+num_components <- 2  # Example: Retaining 2 principal components
+
+# Calculate the loadings
+loadings <- pca_result$rotation[, 1:num_components]
+
+# Select the top features based on loadings
+top_features <- colnames(AIBL_Smote_data)[which.max(abs(loadings))[]]
+
+# Print the top features
+print(top_features)
+
+```
+
+```{r}
+correlations <- cor(AIBL_Smote_data[,-ncol(AIBL_Smote_data)], method = "kendall")
+# install.packages("corrplot")
+library("corrplot")
+
+corrplot(correlations, number.cex = .9, method = "circle", type = "full", tl.cex=0.8,tl.col = "black")
+
+# Apply Boruta algorithm to select features
+# install.packages("Boruta")
+
+library(Boruta)
+
+boruta_obj <- Boruta(DXCURREN ~ ., data = AIBL_Smote_data, doTrace = 2, ntree=500)
+
+aibl_data_selected <- AIBL_Smote_data[, boruta_obj$finalDecision == "Confirmed"]
+
+
+correlations1 <- cor(aibl_data_selected[,-ncol(aibl_data_selected)], method = "kendall")
+
+corrplot(correlations1, number.cex = .9, method = "circle", type = "full", tl.cex=0.8,tl.col = "black")
+
+```
+```{r}
+
+# After Pre processing
+
+aibl_data_final <- aibl_data_selected
+
+# Split the data into training and testing sets
+set.seed(12345)
+
+final_train_index <- createDataPartition(aibl_data_final$DXCURREN, p = 0.7, list = FALSE)
+final_train_data <- aibl_data_final[final_train_index, ]
+final_test_data <- aibl_data_final[-final_train_index, ]
+
+
+# Modelling with Random forest (RF) model
+rf_model <- randomForest(DXCURREN ~ ., data = final_train_data, ntree = 500)
+rf_predict <- predict(rf_model, final_test_data)
+rf_cm <- confusionMatrix(rf_predict, final_test_data$DXCURREN)
+print(rf_cm)
+
+
+```
+
+```{r}
+
+```
