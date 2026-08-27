@@ -7,10 +7,11 @@ Science at Ulster University, and independent study.
 
 | # | Project | Description |
 |---|---|---|
-| 1 | [Alzheimer's Diagnosis Classification (AIBL Dataset)](./01-alzheimers-diagnosis-classification-aibl) | Binary classification (Healthy Control vs Non-HC) using kNN, Random Forest and SVM on clinical/biomarker data, with SMOTE class balancing and RFE feature selection. R. |
+| 1 | [Alzheimer's Diagnosis Classification (AIBL Dataset)](./`Alzheimer's-Disease-Prediction'/01-alzheimers-diagnosis-classification-aibl) | Binary classification (Healthy Control vs Non-HC) using kNN, Random Forest and SVM on clinical/biomarker data, with SMOTE class balancing and RFE feature selection. R. |
 | 2 | [Data Validation and Visualisation (AIBL Dataset)](./02-data-validation-visualisation-aibl) | Follow-up coursework: merges raw AIBL source files end-to-end, with missForest imputation, Boruta feature selection, PCA and correlation analysis, comparing Random Forest accuracy before/after preprocessing. R. |
 
 More projects will be added here as they're organised.
+
 
 ## About
 
