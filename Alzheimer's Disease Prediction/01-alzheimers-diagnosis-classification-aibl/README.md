@@ -41,6 +41,14 @@ genotype markers, blood biomarkers, and cognitive scores (MMSE, logical memory).
    - Random Forest (500 trees)
    - Support Vector Machine (RBF kernel)
 
+## Exploratory Analysis
+
+### Feature distributions by diagnosis
+![Boxplot of features by diagnosis group](./boxplot.png)
+
+### Class balance after SMOTE
+![Class distribution after SMOTE](./smote-result.png)
+
 ## Results
 
 | Model | Accuracy |
