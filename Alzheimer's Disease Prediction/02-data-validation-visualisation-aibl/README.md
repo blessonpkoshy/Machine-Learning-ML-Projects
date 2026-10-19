@@ -55,8 +55,3 @@ this repository**.
 Full confusion matrices, sensitivity/specificity, boxplots (pre/post imputation), correlation
 plots and the Boruta feature selection results are in [`report.pdf`](./report.pdf).
 
-## Notes
-
-- Individual coursework submission; code and write-up are the author's own work.
-- Reproducing the analysis requires access to the raw AIBL dataset files under their own data
-  use agreement — not provided here.
