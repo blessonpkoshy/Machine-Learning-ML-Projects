@@ -3,8 +3,8 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Status-Completed-success?style=for-the-badge&logo=none" alt="Status">
   <img src="https://img.shields.io/badge/Coursework-MSc%20Data%20Science-blue?style=for-the-badge&logo=ulster-university" alt="Ulster University">
+  <img src="https://img.shields.io/badge/Machine%20Learning%20%26%20Data%20Modelling-purple?style=for-the-badge" alt="COM736">
   <img src="https://img.shields.io/badge/Language-R-276DC3?style=for-the-badge&logo=r&logoColor=white" alt="R">
-  <img src="https://img.shields.io/badge/Domain-Healthcare%20ML-orange?style=for-the-badge" alt="Healthcare">
 </p>
 
 ---
