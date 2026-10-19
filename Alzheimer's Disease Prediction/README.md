@@ -1,55 +1,77 @@
-# Alzheimer's Diagnosis Classification: AIBL Coursework
+# <p align="center">🧠 Alzheimer's Diagnosis Classification (AIBL Study Portfolio)</p>
 
-Two related MSc Data Science courseworks (Ulster University) that apply machine learning in R to
-the **AIBL study** (Australian Imaging, Biomarker & Lifestyle Study of Ageing). Both tackle the
-same problem: classifying participants as **Healthy Control (HC)** or **Non-HC** (Mild Cognitive
-Impairment or Alzheimer's Disease combined) from clinical, demographic and blood biomarker data.
+<p align="center">
+  <img src="https://img.shields.io/badge/Degree-MSc%20Data%20Science-blue?style=for-the-badge&logo=ulster-university" alt="MSc Data Science">
+  <img src="https://img.shields.io/badge/University-Ulster%20University-003366?style=for-the-badge" alt="Ulster University">
+  <img src="https://img.shields.io/badge/Language-R-276DC3?style=for-the-badge&logo=r&logoColor=white" alt="R">
+</p>
 
-The second project is a follow-up to the first. It rebuilds the pipeline from the raw source
-files with a more rigorous data validation and feature selection process.
+---
 
-## Projects
+## 🌟 Portfolio Overview
 
-| # | Project | Focus | Key techniques | Best result |
-|---|---|---|---|---|
-| 1 | [Alzheimer's Diagnosis Classification](./01-alzheimers-diagnosis-classification-aibl) | Comparing classifiers on a prepared dataset | kNN, Random Forest, SVM (RBF), SMOTE, RFE feature selection | 93.96% accuracy (kNN) |
-| 2 | [Data Validation and Visualisation](./02-data-validation-visualisation-aibl) | End-to-end data validation, from raw files to model | Multi-file merge, missForest imputation, SMOTE-NC, Boruta, PCA, correlation analysis | 96.98% accuracy (Random Forest) |
+This subfolder houses two interconnected MSc Data Science research projects at **Ulster University** applying advanced supervised machine learning and data engineering pipelines to the **AIBL Study (Australian Imaging, Biomarker & Lifestyle Study of Ageing)**.
 
-## How the two fit together
+Both projects address the critical early diagnostic task: classifying participants into **Healthy Control (HC)** versus **Non-HC** (merging Mild Cognitive Impairment [MCI] and Alzheimer's Disease [AD] into a single pathological target state) using clinical, demographic, cognitive, and blood-based biomarker attributes.
 
-1. **Project 1** shows the modelling side: several classifiers evaluated side by side after
-   class balancing and feature selection.
-2. **Project 2** shows the data side: merging eight raw AIBL tables, imputing missing values,
-   checking distributions, selecting features with Boruta, and measuring how much preprocessing
-   improves a Random Forest (95.33% on raw data, 96.98% after preprocessing).
+```mermaid
+graph LR
+    A[Raw AIBL Source Files] --> B[01: Classification Pipeline]
+    A --> C[02: Data Validation & Imputation]
+    B --> D[kNN / RF / SVM Models - Best: 93.96%]
+    C --> E[missForest + Boruta + RF - Best: 96.98%]
+```
 
-Reading them in order (1, then 2) gives the clearest picture.
+---
 
-## Tech stack
+## 📑 Project Summary & Comparison
 
-- **Language:** R, written as R Markdown notebooks
-- **Packages:** `tidyverse`, `caret`, `randomForest`, `e1071`, `kernlab`, `class`, `neuralnet`,
-  `missForest`, `RSBID`, `Boruta`, `corrplot`
+| # | Project Subfolder | Core Focus & Methodology | Primary ML Techniques | Peak Test Accuracy |
+| :-: | :--- | :--- | :--- | :---: |
+| **01** | [`01-alzheimers-diagnosis-classification-aibl`](./01-alzheimers-diagnosis-classification-aibl) | **Multi-Classifier Evaluation**<br>Comparing algorithms on a pre-cleaned dataset structure. | `kNN`, `Random Forest`, `SVM (RBF)`, `SMOTE`, `RFE Feature Selection` | 🟢 **93.96%**<br>*(kNN, k=5)* |
+| **02** | [`02-data-validation-visualisation-aibl`](./02-data-validation-visualisation-aibl) | **End-to-End Data Pipeline**<br>Multi-table integration, missing value imputation, statistical validation & selection. | `Multi-CSV Join`, `missForest`, `SMOTE-NC`, `Boruta`, `PCA`, `Kendall Correlations` | 🟢 **96.98%**<br>*(Random Forest)* |
 
-## Data availability
+---
 
-The AIBL dataset is released under a data use agreement that does not permit redistribution, so
-**no raw or processed patient data is included** in this repository. Each project contains the
-code and a report with aggregate results only. Reproducing the analysis requires obtaining the
-data directly from AIBL under its own terms.
+## 🔗 How the Projects Interrelate
 
-## Repository layout
+1. **Project 1 (Modelling & Evaluation Focus):** Explores classifier comparative dynamics (kNN, Random Forest, SVM) after baseline balancing (`SMOTE`) and standard feature selection (`RFE`), establishing a benchmark target accuracy of ~$94\%$.
+2. **Project 2 (Data Validation & Pipeline Engineering Focus):** Takes a deeper, foundational approach by merging eight raw source tables directly. It proves that rigorous data cleaning, non-parametric imputation (`missForest`), distribution checks (Shapiro-Wilk), and shadow-attribute selection (`Boruta`) elevate model performance from **95.33%** (raw data) to **96.98%** (fully preprocessed data).
+
+> 💡 *Recommended Reading Order: Explore **Project 01** first to understand model benchmarks, followed by **Project 02** to see the full data pipeline engineering process.*
+
+---
+
+## 🛠️ Technology Stack & Dependencies
+
+* **Core Environment:** R (`R Markdown` reproducible notebooks)
+* **Data Processing & Engineering:** `tidyverse`, `dplyr`, `missForest`, `RSBID` (`SMOTE_NC`)
+* **Machine Learning & Feature Selection:** `caret`, `randomForest`, `e1071`, `kernlab`, `class`, `neuralnet`, `Boruta`
+* **Analytics & Visualisation:** `corrplot`, `stats`, `ggplot2`
+
+---
+
+## 📂 Subfolder Layout
 
 ```
 .
 ├── 01-alzheimers-diagnosis-classification-aibl/
-│   ├── README.md
-│   ├── analysis.Rmd
-│   ├── analysis-report.html
-│   ├── boxplot.png
-│   └── smote-result.png
+│   ├── README.md               # Folder-level workflow documentation
+│   ├── analysis.Rmd            # Source R Markdown code
+│   ├── analysis-report.html    # Full rendered HTML report
+│   ├── boxplot.png             # Exploratory boxplots
+│   └── smote-result.png        # Class balance visualisation
+│
 └── 02-data-validation-visualisation-aibl/
-    ├── README.md
-    ├── analysis.Rmd
-    └── report.pdf
+    ├── README.md               # Folder-level pipeline documentation
+    ├── analysis.Rmd            # Raw-to-model R Markdown notebook
+    └── report.pdf              # IEEE-style formal academic report
 ```
+
+---
+
+## 🔒 Data Privacy & Access Notice
+
+The AIBL dataset is restricted under a formal Data Use Agreement prohibiting public redistribution. **No raw patient records or processed tabular files are hosted in this repository.**
+
+All code, markdown source files, rendered reports, and aggregate metrics are published strictly for academic reference and verification. Researchers seeking to run these scripts must apply for direct data access via the official [AIBL Study Access Portal](https://aibl.csiro.au/).
