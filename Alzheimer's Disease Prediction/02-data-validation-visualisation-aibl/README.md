@@ -3,7 +3,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Status-Completed-success?style=for-the-badge&logo=none" alt="Status">
   <img src="https://img.shields.io/badge/Coursework-MSc%20Data%20Science-blue?style=for-the-badge&logo=ulster-university" alt="Ulster University">
-  <img src="https://img.shields.io/badge/Module-COM736%3A%20Data%20Validation%20%26%20Visualisation-purple?style=for-the-badge" alt="COM736">
+  <img src="https://img.shields.io/badge/Data%20Validation%20%26%20Visualisation-purple?style=for-the-badge" alt="COM736">
   <img src="https://img.shields.io/badge/Language-R-276DC3?style=for-the-badge&logo=r&logoColor=white" alt="R">
 </p>
 
@@ -120,9 +120,9 @@ Comparing performance before vs. after full data validation, cleaning, imputatio
 
 ```
 .
-├── analysis.Rmd     # Full reproducible R Markdown script (data integration, missForest, Boruta, RF)
-├── report.pdf       # Formal IEEE-style academic report detailing equations, plots, and evaluation
-└── README.md        # Folder documentation
+├── analysis.Rmd               # Full reproducible R Markdown script (data integration, missForest, Boruta, RF)
+├── analysis-report.html       #
+└── README.md                  # Folder documentation
 ```
 
 ---
