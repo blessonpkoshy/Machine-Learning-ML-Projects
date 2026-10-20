@@ -1,0 +1,225 @@
+---
+title: "Statistical Modelling & Data Mining CW"
+output: html_document
+---
+
+```{r}
+# Load necessary libraries
+library(rpart)       
+library(rpart.plot)  
+library(class)       
+library(kernlab)     
+library(corrplot) 
+library(caret) 
+library(randomForest)
+library(e1071)
+```
+
+```{r}
+# Setting seed for reproducibility
+set.seed(741152)  
+
+# Reading the dataset from the specified path
+seeds_data <- read.table("C:/Users/bless/Desktop/CW Statistical Modelling & Data Mining/seeds_dataset.txt", header = FALSE)
+
+# Checking the dimensions of the dataset
+dim(seeds_data)
+
+# Defining column names for better understanding
+column_names <- c("Area", "Perimeter", "Compactness", "Length", "Width", "Asymmetry_Coefficient", "Length_Kernel_Groove", "Variety")
+
+# Renaming the columns to more descriptive names
+colnames(seeds_data) <- column_names
+
+# Summarizing the dataset to get an overview of its contents
+summary(seeds_data)
+
+# Displaying the structure of the dataset
+str(seeds_data)
+
+```
+```{r}
+# Check for missing values
+sum(is.na(seeds_data))
+sum(is.null(seeds_data))
+
+# Check for duplicate values and remove duplicates
+duplicated_rows <- seeds_data[duplicated(seeds_data), ]
+seeds_data <- unique(seeds_data)
+
+# Remove rows with missing values
+seeds_data <- na.omit(seeds_data)
+
+```
+
+```{r}
+
+# Count occurrences of each class in 'Variety'
+class_counts <- table(seeds_data$Variety)
+
+# Create a colorful bar chart
+barplot(class_counts, col = c("#FFB6C1", "#ADD8E6", "#90EE90"),
+        main = "Class Distribution", xlab = "Variety", ylab = "Frequency")
+
+```
+
+```{r}
+# Plot histograms for numeric variables
+par(mfrow = c(2, 4))  # Setting up a grid for subplots
+
+for (i in 1:ncol(seeds_data)) {
+  if (is.numeric(seeds_data[[i]])) {
+    hist(seeds_data[[i]], main = paste("Histogram of", names(seeds_data)[i]), xlab = names(seeds_data)[i])
+  }
+}
+
+```
+
+```{r}
+# Compute the correlation matrix
+correlation_matrix <- cor(seeds_data)
+
+# Create a correlation plot using corrplot
+corrplot(correlation_matrix, method = "color", type = "upper", order = "hclust", tl.col = "black", tl.srt = 45)
+
+```
+
+```{r}
+par(mfrow = c(2, 4))
+# Boxplot to identify outliers for a specific variable
+for (i in column_names) {
+  boxplot(seeds_data[[i]], main = paste("Boxplot of", i))
+}
+
+```
+
+
+```{r}
+# Recursive feature selection (RFE)
+
+ctrl <- rfeControl(functions = rfFuncs, method = "cv", number = 5)
+suppressWarnings(rfProfile <- rfe(seeds_data[, 1:(ncol(seeds_data) - 1)], seeds_data$Variety, sizes = c(1:(ncol(seeds_data) - 1)), rfeControl = ctrl))
+
+
+print(rfProfile$optVariables)
+
+seeds_data_Re <- seeds_data[, c(rfProfile$optVariables,"Variety")]
+summary(seeds_data_Re)
+
+```
+
+```{r}
+
+# Split data into training and testing sets
+train_index <- seeds_data_Re$Variety %>%  createDataPartition(p = 0.8, list = FALSE)
+
+
+train_data <- seeds_data_Re[train_index, ]
+test_data <- seeds_data_Re[-train_index, ]
+
+# Display class distribution in training and testing sets
+table(train_data$Variety)
+table(test_data$Variety)
+
+# Feature scaling
+train_data[, -ncol(train_data)] <- scale(train_data[, -ncol(train_data)])
+test_data[, -ncol(test_data)] <- scale(test_data[, -ncol(test_data)])
+
+# Convert target variable to factor
+test_data$Variety <- as.factor(test_data$Variety)
+train_data$Variety <- as.factor(train_data$Variety)
+
+```
+
+```{r}
+# Model training and evaluation
+
+# k-Nearest Neighbors (kNN) model and create confusion matrix
+knn_model <- knn(train = train_data[, -ncol(train_data)], 
+                 test = test_data[, -ncol(test_data)], 
+                 cl = train_data$Variety, k = 7)
+knn_cm <- confusionMatrix(knn_model, test_data$Variety)
+print("k-Nearest Neighbors (kNN) model")
+print(knn_cm)
+
+```
+
+```{r}
+# Random forest (RF) model
+rf_model <- randomForest(Variety ~ ., data = train_data, ntree = 500)
+rf_predict <- predict(rf_model, test_data)
+rf_cm <- confusionMatrix(rf_predict, test_data$Variety)
+print("Random forest (RF) model")
+print(rf_cm)
+
+```
+
+```{r}
+# Support vector machine (SVM) model
+svm_model <- ksvm(Variety ~ ., data = train_data, 
+                  type = "C-svc", kernel = "rbfdot", 
+                  kpar = list(sigma = 0.1), C = 100)
+svm_predict <- predict(svm_model, test_data)
+svm_cm <- confusionMatrix(svm_predict, test_data$Variety)
+print("Support vector machine (SVM) model")
+print(svm_cm)
+
+
+
+```
+
+```{r}
+# Decision tree model
+seed_tree <- rpart(Variety ~ ., data = train_data, method = "class")
+
+# Plot the decision tree
+rpart.plot(seed_tree)
+
+# Make predictions on test data
+predictions <- predict(seed_tree, test_data, type = "class")
+
+# Evaluate the accuracy of the model
+actual_labels <- test_data$Variety
+
+dt_cm <- confusionMatrix(predictions,actual_labels)
+
+print("Decision tree model")
+print(dt_cm)
+
+```
+
+```{r}
+# Naive Bayes model
+nb_model <- naiveBayes(Variety ~ ., data = train_data)
+
+# Make predictions on test data
+predictions <- predict(nb_model, test_data[, -ncol(test_data)])
+
+# Create confusion matrix
+nb_cm <- confusionMatrix(predictions,test_data$Variety)
+
+print("Decision tree model")
+print(nb_cm)
+```
+
+```{r}
+model_names <- c("kNN", "RF", "SVM", "DT", "NB") 
+accuracy_values <- c(0.881, 0.9048, 0.9524, 0.9286, 0.9286)  
+
+accuracy_data <- data.frame(Model = model_names, Accuracy = accuracy_values)
+
+accuracy_data$Percentage <- paste0(format(accuracy_data$Accuracy * 100, digits = 4), "%")
+
+# Plotting using ggplot2
+ggplot(accuracy_data, aes(x = Model, y = Accuracy, fill = Model)) +
+  geom_bar(stat = "identity", position = "dodge", width = 0.5, color = "black") +
+  geom_text(aes(label = Percentage), position = position_dodge(width = 0.5), vjust = -0.5) +
+  labs(title = "Model Accuracy Comparison",
+       x = "Models",
+       y = "Accuracy") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        plot.title = element_text(hjust = 0.5))  
+
+
+```

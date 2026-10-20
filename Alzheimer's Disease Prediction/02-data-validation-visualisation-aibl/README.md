@@ -130,3 +130,9 @@ Comparing performance before vs. after full data validation, cleaning, imputatio
 ## 📜 Academic Integrity & Usage Notice
 * Developed as an individual academic submission for **Ulster University (COM736)**. All code and report analyses are original.
 * Access to underlying raw AIBL data must be requested separately via the official [AIBL Study access portal](https://aibl.csiro.au/).
+
+
+
+
+
+<p align="center"><sub>Individual MSc coursework submission · Ulster University</sub></p>
